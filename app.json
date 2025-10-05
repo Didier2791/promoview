@@ -19,12 +19,15 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
- "ios": {
-  "supportsTablet": true,
-  "googleServicesFile": "./GoogleService-Info.plist",
-  "bundleIdentifier": "com.didier2791.promoviewApp"
-},
-
+    "ios": {
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "bundleIdentifier": "com.didier2791.promoviewApp",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "android": {
       "package": "com.didier2791.promoviewApp",
       "enableProguardInReleaseBuilds": true,
