@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "256954827065",
+    "project_id": "promoview1-2c2f9",
+    "storage_bucket": "promoview1-2c2f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:256954827065:android:69fa52a34e04cd20da28e8",
+        "android_client_info": {
+          "package_name": "com.didier2791.promoviewApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC288rmBqZa7uXMcv5cwaM80aXufGknHBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

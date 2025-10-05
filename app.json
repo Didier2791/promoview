@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "PromoviewApp",
+    "slug": "PromoviewApp",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "myapp",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+ "ios": {
+  "supportsTablet": true,
+  "googleServicesFile": "./GoogleService-Info.plist",
+  "bundleIdentifier": "com.didier2791.promoviewApp"
+},
+
+    "android": {
+      "package": "com.didier2791.promoviewApp",
+      "enableProguardInReleaseBuilds": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "usesCleartextTraffic": true,
+      "allowBackup": false,
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ],
+      "googleServicesFile": "./google-services.json",
+      "networkSecurityConfig": "network_security_config",
+      "notification": {
+        "icon": "./assets/notification-icon.png",
+        "color": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-video",
+      "expo-dev-client",
+      "@react-native-firebase/app",
+      [
+        "@react-native-firebase/messaging",
+        {
+          "android": {
+            "channelId": "default",
+            "channelName": "Notifications",
+            "channelDescription": "Notifications de l'application"
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "owner": "didier2791",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "28455f1e-7e2a-4d97-9456-29a396d2d9a5"
+      }
+    }
+  }
+}
