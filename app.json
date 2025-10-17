@@ -55,18 +55,9 @@
     "plugins": [
       "expo-router",
       "expo-video",
-      "expo-dev-client",
+      
       "@react-native-firebase/app",
-      [
-        "@react-native-firebase/messaging",
-        {
-          "android": {
-            "channelId": "default",
-            "channelName": "Notifications",
-            "channelDescription": "Notifications de l'application"
-          }
-        }
-      ],
+    
       "expo-font"
     ],
     "owner": "didier2791",
