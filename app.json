@@ -21,9 +21,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "googleServicesFile": "./GoogleService-Info.plist",
       "bundleIdentifier": "com.didier2791.promoviewApp",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -42,12 +40,11 @@
         "android.permission.VIBRATE",
         "android.permission.WAKE_LOCK"
       ],
-      "googleServicesFile": "./google-services.json",
-      "networkSecurityConfig": "network_security_config",
-      "notification": {
-        "icon": "./assets/notification-icon.png",
-        "color": "#ffffff"
-      }
+      "networkSecurityConfig": "network_security_config"
+    },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#ffffff"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -55,9 +52,14 @@
     "plugins": [
       "expo-router",
       "expo-video",
-      
-      "@react-native-firebase/app",
-    
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default"
+        }
+      ],
       "expo-font"
     ],
     "owner": "didier2791",
