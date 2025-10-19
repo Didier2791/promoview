@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
 import { UserProvider } from "./context/UserContext";
 import NotificationService from "../services/NotificationService";
-import '../services/FirebaseConfig';
+
 
 export default function RootLayout() {
   useEffect(() => {
