@@ -270,13 +270,15 @@ class NotificationService {
       const userToken = await AsyncStorage.getItem('userToken');
       if (!userToken) return;
 
-      const response = await fetch(`${API_URL}/api/admin/utilisateurs/${userId}/push-token`, {
+      const response = await fetch(`${API_URL}/api/push-tokens`, {
+
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${userToken}`,
         },
-        body: JSON.stringify({ pushToken: token }),
+      body: JSON.stringify({ pushToken: token, platform: Platform.OS }),
+
       });
 
       if (!response.ok) {
