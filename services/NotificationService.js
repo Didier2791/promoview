@@ -174,7 +174,7 @@ export default new NotificationService();
  */
 
 
-import * as Notifications from 'expo-notifications';
+/* import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -374,6 +374,207 @@ class NotificationService {
     if (this.responseListener) {
       this.responseListener.remove();
     }
+  }
+}
+
+export default new NotificationService(); */
+
+
+
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import { API_URL } from '../config';
+
+// Configuration du comportement des notifications en foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+class NotificationService {
+  listeners = [];
+  notificationListener = null;
+  responseListener = null;
+
+  // Abonnement d'un composant aux notifications
+  subscribe(listener) {
+    if (!this.listeners.includes(listener)) {
+      this.listeners.push(listener);
+      console.log('📝 Nouveau listener abonné, total:', this.listeners.length);
+    }
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+      console.log('📝 Listener désabonné, total:', this.listeners.length);
+    };
+  }
+
+  notifyListeners(data) {
+    this.listeners.forEach((listener, index) => {
+      try {
+        listener(data);
+        console.log(`✅ Listener ${index} notifié avec succès`);
+      } catch (error) {
+        console.error(`❌ Erreur listener ${index}:`, error);
+      }
+    });
+  }
+
+  async requestPermission() {
+    if (Platform.OS === 'web' || !Device.isDevice) {
+      console.log('⚠️ Notifications non supportées sur web/simulateur');
+      return false;
+    }
+
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      const enabled = finalStatus === 'granted';
+      console.log(enabled ? '✅ Permission accordée' : '❌ Permission refusée');
+      return enabled;
+    } catch (error) {
+      console.error('Erreur demande permission:', error);
+      return false;
+    }
+  }
+
+  async getToken() {
+    if (Platform.OS === 'web' || !Device.isDevice) return null;
+
+    try {
+      const token = (await Notifications.getExpoPushTokenAsync({
+        projectId: '28455f1e-7e2a-4d97-9456-29a396d2d9a5',
+      })).data;
+
+      console.log('🔑 Expo Push Token récupéré:', token);
+      return token;
+    } catch (error) {
+      console.error('Erreur récupération token:', error);
+      return null;
+    }
+  }
+
+  // ⚙️ Modifié : le token est toujours envoyé (réassignation entre utilisateurs)
+  async sendTokenToServerIfChanged(token, userId) {
+    if (!token || !userId) return;
+
+    try {
+      const userToken = await AsyncStorage.getItem('userToken');
+      if (!userToken) {
+        console.log('⚠️ Aucun userToken trouvé, abandon envoi pushToken');
+        return;
+      }
+
+      // ⚙️ On n’utilise plus le "token inchangé" comme critère
+      // car un autre utilisateur peut se connecter sur le même appareil
+      console.log('📡 Envoi du pushToken au serveur (réassignation possible)...');
+
+      const response = await fetch(`${API_URL}/api/push-tokens`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({
+          pushToken: token,
+          platform: Platform.OS,
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('❌ Erreur serveur envoi pushToken:', response.status, errText);
+      } else {
+        console.log('✅ Token Expo envoyé et enregistré sur le serveur');
+        await AsyncStorage.setItem('expoPushToken', token);
+      }
+    } catch (error) {
+      console.error('❌ Erreur envoi pushToken:', error);
+    }
+  }
+
+  setupMessageListeners() {
+    // Notifications reçues en foreground
+    this.notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('📱 Notification reçue (foreground):', notification);
+
+      const data = notification.request.content.data;
+      const type = data?.type;
+
+      if (type === 'new_publication' || type === 'publication') {
+        this.notifyListeners(data);
+      }
+    });
+
+    // Notifications tapées par l'utilisateur
+    this.responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('📱 Notification tapée:', response);
+
+      const data = response.notification.request.content.data;
+      const type = data?.type;
+
+      if (type === 'new_publication' || type === 'publication') {
+        this.notifyListeners(data);
+      }
+    });
+
+    // Notification qui a lancé l'app (cold start)
+    Notifications.getLastNotificationResponseAsync().then(response => {
+      if (response) {
+        console.log('📱 Notification cold start:', response);
+        const data = response.notification.request.content.data;
+        if (data?.type === 'new_publication' || data?.type === 'publication') {
+          this.notifyListeners(data);
+        }
+      }
+    });
+  }
+
+  async initialize() {
+    console.log('🔹 NotificationService initialisation (Expo)');
+
+    if (Platform.OS === 'web' || !Device.isDevice) {
+      console.log('⚠️ Pas d\'initialisation sur web/simulateur');
+      return null;
+    }
+
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Notifications',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+
+    const hasPermission = await this.requestPermission();
+    if (!hasPermission) return null;
+
+    const token = await this.getToken();
+    const userId = await AsyncStorage.getItem('userId');
+
+    if (token && userId) {
+      await this.sendTokenToServerIfChanged(token, userId);
+    }
+
+    this.setupMessageListeners();
+
+    return token;
+  }
+
+  cleanup() {
+    if (this.notificationListener) this.notificationListener.remove();
+    if (this.responseListener) this.responseListener.remove();
   }
 }
 
