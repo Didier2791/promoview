@@ -381,6 +381,7 @@ export default new NotificationService(); */
 
 
 
+// services/NotificationService.js (version iOS adaptée à ton backend)
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -401,7 +402,6 @@ class NotificationService {
   notificationListener = null;
   responseListener = null;
 
-  // Abonnement d'un composant aux notifications
   subscribe(listener) {
     if (!this.listeners.includes(listener)) {
       this.listeners.push(listener);
@@ -449,53 +449,60 @@ class NotificationService {
   }
 
   async getToken() {
-    if (Platform.OS === 'web' || !Device.isDevice) return null;
+    if (!Device.isDevice) {
+      console.log('⚠️ Pas de token sur simulateur');
+      return null;
+    }
 
     try {
-      const token = (await Notifications.getExpoPushTokenAsync({
-        projectId: '28455f1e-7e2a-4d97-9456-29a396d2d9a5',
-      })).data;
-
+      const { data: token } = await Notifications.getExpoPushTokenAsync({
+        projectId: '28455f1e-7e2a-4d97-9456-29a396d2d9a5', // ton projectId Expo
+      });
       console.log('🔑 Expo Push Token récupéré:', token);
       return token;
     } catch (error) {
-      console.error('Erreur récupération token:', error);
+      console.error('❌ Erreur récupération token:', error);
       return null;
     }
   }
 
-  // ⚙️ Modifié : le token est toujours envoyé (réassignation entre utilisateurs)
   async sendTokenToServerIfChanged(token, userId) {
     if (!token || !userId) return;
 
     try {
-      const userToken = await AsyncStorage.getItem('userToken');
-      if (!userToken) {
-        console.log('⚠️ Aucun userToken trouvé, abandon envoi pushToken');
+      const storedToken = await AsyncStorage.getItem('expoPushToken');
+      if (storedToken === token) {
+        console.log('✅ Token inchangé, pas besoin d’envoyer au serveur');
         return;
       }
 
-      // ⚙️ On n’utilise plus le "token inchangé" comme critère
-      // car un autre utilisateur peut se connecter sur le même appareil
-      console.log('📡 Envoi du pushToken au serveur (réassignation possible)...');
+      const userToken = await AsyncStorage.getItem('userToken');
+      if (!userToken) {
+        console.log('⚠️ Aucun userToken disponible, arrêt');
+        return;
+      }
 
-      const response = await fetch(`${API_URL}/api/push-tokens`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userToken}`,
-        },
-        body: JSON.stringify({
-          pushToken: token,
-          platform: Platform.OS,
-        }),
-      });
+      // ✅ Même endpoint que pour Android
+      const response = await fetch(
+        `${API_URL}/api/admin/utilisateurs/${userId}/push-token`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${userToken}`,
+          },
+          body: JSON.stringify({ pushToken: token }),
+        }
+      );
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.error('❌ Erreur serveur envoi pushToken:', response.status, errText);
+        console.error(
+          '❌ Erreur serveur envoi pushToken:',
+          response.status,
+          await response.text()
+        );
       } else {
-        console.log('✅ Token Expo envoyé et enregistré sur le serveur');
+        console.log('📡 Token Expo envoyé au serveur et enregistré localement');
         await AsyncStorage.setItem('expoPushToken', token);
       }
     } catch (error) {
@@ -504,31 +511,27 @@ class NotificationService {
   }
 
   setupMessageListeners() {
-    // Notifications reçues en foreground
+    // Foreground
     this.notificationListener = Notifications.addNotificationReceivedListener(notification => {
       console.log('📱 Notification reçue (foreground):', notification);
-
       const data = notification.request.content.data;
       const type = data?.type;
-
       if (type === 'new_publication' || type === 'publication') {
         this.notifyListeners(data);
       }
     });
 
-    // Notifications tapées par l'utilisateur
+    // Notification tapée
     this.responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('📱 Notification tapée:', response);
-
       const data = response.notification.request.content.data;
       const type = data?.type;
-
       if (type === 'new_publication' || type === 'publication') {
         this.notifyListeners(data);
       }
     });
 
-    // Notification qui a lancé l'app (cold start)
+    // Cold start
     Notifications.getLastNotificationResponseAsync().then(response => {
       if (response) {
         console.log('📱 Notification cold start:', response);
@@ -541,10 +544,10 @@ class NotificationService {
   }
 
   async initialize() {
-    console.log('🔹 NotificationService initialisation (Expo)');
+    console.log('🔹 NotificationService initialisation iOS');
 
-    if (Platform.OS === 'web' || !Device.isDevice) {
-      console.log('⚠️ Pas d\'initialisation sur web/simulateur');
+    if (!Device.isDevice) {
+      console.log('⚠️ Pas d’initialisation sur simulateur');
       return null;
     }
 
@@ -552,8 +555,6 @@ class NotificationService {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'Notifications',
         importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
       });
     }
 
