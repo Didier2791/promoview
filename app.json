@@ -19,13 +19,16 @@
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "ios": {
+ 
+        "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.didier2791.promoviewApp",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+
     "android": {
       "package": "com.didier2791.promoviewApp",
       "enableProguardInReleaseBuilds": true,
